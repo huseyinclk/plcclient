@@ -107,6 +107,7 @@ namespace PlcClient
                                                     pinVal.Time = (int)Utility.ConvertToUnixTime(DateTime.Now);
                                                     pinVal.Date = DateTime.Now;
                                                     pinVal.WstationCode = devices[i].DeviceDInfo[loop].WstationCode;
+                                                    pinVal.SessionId = Utility.ApplicationSessionId;
                                                 }
 
                                                 if (pinVal.Date.Year < 2020) pinVal.Date = Utility.UnixTimeToDateTime(pinVal.Time);
@@ -161,6 +162,7 @@ namespace PlcClient
                                                     value = pinVal.Count;
                                                 }
 
+                                                pinVal.SessionId = Utility.ApplicationSessionId;
                                                 pinVal.Count = value;
                                                 rm.SetValue(_redisKey, pinVal);
                                             }// okuma end
