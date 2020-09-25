@@ -110,6 +110,14 @@ namespace PlcClient
                                                     pinVal.SessionId = Utility.ApplicationSessionId;
                                                 }
 
+                                                if (pinVal.VCount > 0)
+                                                {
+                                                    value = value - pinVal.VCount;
+                                                    devices[i].Device.Write(devices[i].DeviceDInfo[loop].Address, value);
+                                                    pinVal.VCount = 0;
+
+                                                }
+
                                                 if (pinVal.Date.Year < 2020) pinVal.Date = Utility.UnixTimeToDateTime(pinVal.Time);
 
                                                 DateTime time = Utility.UnixTimeToDateTime(pinVal.Time);

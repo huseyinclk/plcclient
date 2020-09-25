@@ -11,6 +11,7 @@ namespace PlcCommon.Model
         public int Id { get; set; }
         public string Address { get; set; }
         public int Count { get; set; }
+        public int VCount { get; set; }
         public int RCount { get; set; }
         public int Time { get; set; }
         public DateTime Date { get; set; }
