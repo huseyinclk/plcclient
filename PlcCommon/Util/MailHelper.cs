@@ -17,7 +17,7 @@ namespace PlcCommon.Util
         const int Port = 587; //POP3 port 110/SMTP
         const string Host = "mail.ors.com.tr";
 
-        public static string[] Adresler = new string[] { "mustafa.bayer@uyumsoft.com", "huseyin.celik@uyumsoft.com" };
+        public static string[] Adresler = new string[] { "mustafa.bayer@uyumsoft.com", "huseyin.celik@uyumsoft.com", "osman.dogan@ors.com.tr", "huseyin.kilinc@ors.com.tr", "erhan.eroglu@ors.com.tr" };
         public static string MailBaslik = "Otomasyon Bilgi (OPC Client)";
 
         //const string From = "huseyin.celik@yandex.com";

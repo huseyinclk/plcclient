@@ -435,6 +435,8 @@ namespace PlcService
                 DateTime satartTime = DateTime.Now, endTime;
                 long totalMemory = GC.GetTotalMemory(true);
                 Stopwatch stopwatch = Stopwatch.StartNew();
+                var offlineCount = 0;
+                bool isonline = false;
 
                 string appName = Assembly.GetCallingAssembly().GetName().Name;
 
@@ -468,12 +470,17 @@ namespace PlcService
                             {
                                 device[i].Device = new PlcCommon.S7.Net.Plc(PlcCommon.S7.Net.CpuType.S71200, device[i].DeviceHost, 0, 1);
 
+                                isonline = device[i].Device.IsConnected;
+
                                 if (device[i].IsOnline(rm))
                                     device[i].Device.Open();
 
-                                if (!device[i].Device.IsConnected)
+                                if (!isonline)
+                                {
                                     writer.WriteLine($"PLC:{device[i].DeviceHost},Ulaşılamıyor!");
-                            }                    
+                                    offlineCount++;
+                                }
+                            }
 
                             for (int loop = 0; loop < device[i].DeviceDInfo.Count; loop++)
                             {
@@ -485,19 +492,21 @@ namespace PlcService
 
                                 object val = null;
 
-                                if (device[i].AutomationDeviceId != -1011 && device[i].Device.IsConnected)
+                                if (device[i].AutomationDeviceId != -1011 && isonline)
                                     val = val = device[i].Device.Read(device[i].DeviceDInfo[loop].Address);
 
                                 #region PLC okunamiyorsa Redis oku
                                 if (val == null && rval != null)
                                 {
                                     val = rval.Count;
+                                    if (!isonline) rval.VCount = rval.Count;//plcye erisilemiyorsa vardiya miktari tutulacak
+                                    else rval.VCount = 0;
                                 }
                                 #endregion
 
                                 int.TryParse(val.ToString(), out count);
 
-                                if (device[i].AutomationDeviceId != -1011 && device[i].Device.IsConnected)
+                                if (device[i].AutomationDeviceId != -1011 && isonline)
                                     device[i].Device.Write(device[i].DeviceDInfo[loop].Address, 0);
 
                                 #region Redis Update
@@ -536,11 +545,12 @@ namespace PlcService
                 System.Diagnostics.Trace.WriteLine(string.Format("Memory-1: {0} Memory-2: {1}, ElapsedMillisecond:{2}", b2, totalMemory, stopwatch.ElapsedMilliseconds));
                 endTime = DateTime.Now;
 
-                writer.WriteLine($"`{Utility.CurrentShift.ShiftCode}` Vardiya başarılı bir şekilde değiştirildi.Memory-1: {b2} Memory-2: {totalMemory}, ElapsedMillisecond:{stopwatch.ElapsedMilliseconds}, Başlangıç:{satartTime.ToString("HH:mm:ss")}, Bitiş:{endTime.ToString("HH:mm:ss")}");
+                //writer.WriteLine($"`{Utility.CurrentShift.ShiftCode}` Vardiya başarılı bir şekilde değiştirildi.Memory-1: {b2} Memory-2: {totalMemory}, ElapsedMillisecond:{stopwatch.ElapsedMilliseconds}, Başlangıç:{satartTime.ToString("HH:mm:ss")}, Bitiş:{endTime.ToString("HH:mm:ss")}");
                 writer.Close();
                 writer.Dispose();
 
-                MailHelper.SendMail(null, MailHelper.MailBaslik, $"`{Utility.CurrentShift.ShiftCode}` Vardiya başarılı bir şekilde değiştirildi.Memory-1: {b2} Memory-2: {totalMemory}, ElapsedMillisecond:{stopwatch.ElapsedMilliseconds}, Başlangıç:{satartTime.ToString("HH:mm:ss")}, Bitiş:{endTime.ToString("HH:mm:ss")}", trace);
+                MailHelper.SendMail(offlineCount > 0 ? MailHelper.Adresler : null, MailHelper.MailBaslik, $"`{Utility.CurrentShift.ShiftCode}` Vardiya başarılı bir şekilde değiştirildi, ancak bazı PLC lere işlem yapılamadı. PLC adresleri ektedir. Memory-1: {b2} Memory-2: {totalMemory}, ElapsedMillisecond:{stopwatch.ElapsedMilliseconds}, Başlangıç:{satartTime.ToString("HH:mm:ss")}, Bitiş:{endTime.ToString("HH:mm:ss")}", trace);
+
             }
             catch (Exception exception)
             {

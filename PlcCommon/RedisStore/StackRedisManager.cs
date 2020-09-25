@@ -108,6 +108,8 @@ namespace PlcCommon.RedisStore
                         value.RTime = Convert.ToInt32(hashEntry[8].Value);
                     if (hashEntry.Length > 9)
                         value.Date = Convert.ToDateTime(hashEntry[9].Value.ToString());
+                    if (hashEntry.Length > 10)
+                        value.VCount = (int)hashEntry[10].Value;
                 }
             }
             catch (Exception exc)
@@ -135,7 +137,8 @@ namespace PlcCommon.RedisStore
                             new HashEntry("isrework",value.IsRework == true ? "1":"0"),
                             new HashEntry("rcount",value.RCount),
                             new HashEntry("rtime",value.RTime),
-                            new HashEntry("date",value.Date.ToString("yyyy-MM-dd HH:mm:ss"))});
+                            new HashEntry("date",value.Date.ToString("yyyy-MM-dd HH:mm:ss")),
+                            new HashEntry("vqty",value.VCount)});
             }
             catch (Exception ex)
             {
@@ -524,7 +527,7 @@ namespace PlcCommon.RedisStore
             var keys = server.Keys();
             foreach (var key in keys)
             {
-                if(!string.IsNullOrWhiteSpace(pattern))
+                if (!string.IsNullOrWhiteSpace(pattern))
                 {
                     if (key.ToString().IndexOf(pattern) != -1)
                         result.Add(key);
