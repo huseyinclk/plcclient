@@ -67,6 +67,7 @@
     <Compile Include="Data\NpgsqlProvider.cs" />
     <Compile Include="ExtensionMethod.cs" />
     <Compile Include="Logs\Logger.cs" />
+    <Compile Include="Logs\LogWriter.cs" />
     <Compile Include="Logs\TextWriterTraceListener.cs" />
     <Compile Include="Model\AutomationActivityTimeInfo.cs" />
     <Compile Include="Model\AutomationBreakInfo.cs" />

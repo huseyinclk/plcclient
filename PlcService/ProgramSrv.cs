@@ -38,8 +38,6 @@ namespace PlcService
         {
             try
             {
-
-
                 InitialLogger();
 
                 if (args != null && args.Length > 0)
@@ -88,16 +86,6 @@ namespace PlcService
                     }
 
                 }
-
-                Environment.Exit(-1);
-
-                //timerCounter = new System.Timers.Timer();
-                //timerCounter.Interval = interval;
-                //timerCounter.Elapsed += TimerCallback;
-                //timerCounter.Enabled = true;
-
-                Console.WriteLine("Press any key to stop...");
-                Console.ReadKey(true);
 
             }
             catch (Exception exc)
@@ -432,9 +420,7 @@ namespace PlcService
 
                 string trace = "";
                 StreamWriter writer = null;
-                DateTime satartTime = DateTime.Now, endTime;
-                long totalMemory = GC.GetTotalMemory(true);
-                Stopwatch stopwatch = Stopwatch.StartNew();
+                LogWriter logwriter = new LogWriter();
                 var offlineCount = 0;
                 bool isonline = false;
 
@@ -540,16 +526,13 @@ namespace PlcService
                     }
                 }
 
-                long b2 = GC.GetTotalMemory(true);
-                stopwatch.Stop();
-                System.Diagnostics.Trace.WriteLine(string.Format("Memory-1: {0} Memory-2: {1}, ElapsedMillisecond:{2}", b2, totalMemory, stopwatch.ElapsedMilliseconds));
-                endTime = DateTime.Now;
+                System.Diagnostics.Trace.WriteLine(logwriter.EndLog());
 
                 //writer.WriteLine($"`{Utility.CurrentShift.ShiftCode}` Vardiya başarılı bir şekilde değiştirildi.Memory-1: {b2} Memory-2: {totalMemory}, ElapsedMillisecond:{stopwatch.ElapsedMilliseconds}, Başlangıç:{satartTime.ToString("HH:mm:ss")}, Bitiş:{endTime.ToString("HH:mm:ss")}");
                 writer.Close();
                 writer.Dispose();
 
-                MailHelper.SendMail(offlineCount > 0 ? MailHelper.Adresler : null, MailHelper.MailBaslik, $"`{Utility.CurrentShift.ShiftCode}` Vardiya başarılı bir şekilde değiştirildi, ancak bazı PLC lere işlem yapılamadı. PLC adresleri ektedir. Memory-1: {b2} Memory-2: {totalMemory}, ElapsedMillisecond:{stopwatch.ElapsedMilliseconds}, Başlangıç:{satartTime.ToString("HH:mm:ss")}, Bitiş:{endTime.ToString("HH:mm:ss")}", trace);
+                MailHelper.SendMail(null, MailHelper.MailBaslik, $"`{Utility.CurrentShift.ShiftCode}` Vardiya başarılı bir şekilde değiştirildi, ancak bazı PLC lere işlem yapılamadı. PLC adresleri ektedir. Memory-1: {logwriter.Memory} Memory-2: {logwriter.TotalMemory}, ElapsedMillisecond:{logwriter.ElapsedMilliseconds}, Başlangıç:{logwriter.SatartTime.ToString("HH:mm:ss")}, Bitiş:{logwriter.EndTime.ToString("HH:mm:ss")}", trace);
 
             }
             catch (Exception exception)
@@ -624,6 +607,7 @@ namespace PlcService
                                     Logger.E(exc);
                                 }
                                 StartApp(string.Join(",", listDevice[i]), rm);
+                                MailHelper.SendMail(null, MailHelper.MailBaslik, $"`{arguments}` Uygulama offline olduğu için kapatılıp açıldı");
                             }
                             else
                             {
@@ -663,9 +647,9 @@ namespace PlcService
             {
                 Console.Title = $"PLC Server V:{Utility.Versiyon}";
 
-                var consoleTracer = new ConsoleTraceListener(true);
-                consoleTracer.Flush();
-                Trace.Listeners.Add(consoleTracer);
+                //var consoleTracer = new ConsoleTraceListener(true);
+                //consoleTracer.Flush();
+                //Trace.Listeners.Add(consoleTracer);
             }
 
         }

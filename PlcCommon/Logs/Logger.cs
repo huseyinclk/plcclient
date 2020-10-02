@@ -13,16 +13,31 @@ namespace PlcCommon.Logs
         public static void Write(Exception exception, [CallerMemberName] string callerName = "", [CallerLineNumber] int lineNumber = 0)
         {
             System.Diagnostics.Trace.WriteLine(string.Concat("Trace :: ", DateTime.Now.ToString(), ", Caller: ", callerName, ", lineNumber : ", lineNumber, ", Exception: ", exception.Message, ", StackTrace:", exception.StackTrace));
+            if (Environment.UserInteractive)
+            {
+                Console.BackgroundColor = ConsoleColor.Blue;
+                Console.WriteLine(string.Concat("Trace :: ", DateTime.Now.ToString(), ", Caller: ", callerName, ", lineNumber : ", lineNumber, ", Exception: ", exception.Message, ", StackTrace:", exception.StackTrace));
+            }
         }
 
         public static void Write(string str, [CallerMemberName] string callerName = "", [CallerLineNumber] int lineNumber = 0)
         {
             System.Diagnostics.Trace.WriteLine(string.Concat("Trace :: ", DateTime.Now.ToString(), ", Caller: ", callerName, ", lineNumber : ", lineNumber, ", Mesaj: ", str));
+            if (Environment.UserInteractive)
+            {
+                Console.BackgroundColor = ConsoleColor.Blue;
+                Console.WriteLine(string.Concat("Trace :: ", DateTime.Now.ToString(), ", Caller: ", callerName, ", lineNumber : ", lineNumber, ", Mesaj: ", str));
+            }
         }
 
         public static void Write(object obj, [CallerMemberName] string callerName = "", [CallerLineNumber] int lineNumber = 0)
         {
             System.Diagnostics.Trace.WriteLine(string.Concat("Trace :: ", DateTime.Now.ToString(), ", Caller: ", callerName, ", lineNumber : ", lineNumber, ", Object: ", obj != null ? obj.ToString() : "null"));
+            if (Environment.UserInteractive)
+            {
+                Console.BackgroundColor = ConsoleColor.Blue;
+                Console.WriteLine(string.Concat("Trace :: ", DateTime.Now.ToString(), ", Caller: ", callerName, ", lineNumber : ", lineNumber, ", Object: ", obj != null ? obj.ToString() : "null"));
+            }
         }
         #endregion
 
@@ -35,6 +50,11 @@ namespace PlcCommon.Logs
             {
                 System.Diagnostics.Trace.WriteLine(string.Concat("Verbose :: ", DateTime.Now.ToString(), ", Caller: ", callerName, ", lineNumber : ", lineNumber, ", Exception: ", exception.Message, ", StackTrace:", exception.StackTrace));
             }
+            if (Environment.UserInteractive)
+            {
+                Console.BackgroundColor = ConsoleColor.Black;
+                Console.WriteLine(string.Concat("Verbose :: ", DateTime.Now.ToString(), ", Caller: ", callerName, ", lineNumber : ", lineNumber, ", Exception: ", exception.Message, ", StackTrace:", exception.StackTrace));
+            }
         }
 
         public static void V(string str, [CallerMemberName] string callerName = "", [CallerLineNumber] int lineNumber = 0)
@@ -45,6 +65,11 @@ namespace PlcCommon.Logs
             {
                 System.Diagnostics.Trace.WriteLine(string.Concat("Verbose :: ", DateTime.Now.ToString(), ", Caller: ", callerName, ", lineNumber : ", lineNumber, ", Mesaj: ", str));
             }
+            if (Environment.UserInteractive)
+            {
+                Console.BackgroundColor = ConsoleColor.Black;
+                Console.WriteLine(string.Concat("Verbose :: ", DateTime.Now.ToString(), ", Caller: ", callerName, ", lineNumber : ", lineNumber, ", Mesaj: ", str));
+            }
         }
 
         public static void V(object obj, [CallerMemberName] string callerName = "", [CallerLineNumber] int lineNumber = 0)
@@ -54,6 +79,11 @@ namespace PlcCommon.Logs
             if (level.GetHashCode() >= 4)
             {
                 System.Diagnostics.Trace.WriteLine(string.Concat("Verbose :: ", DateTime.Now.ToString(), ", Caller: ", callerName, ", lineNumber : ", lineNumber, ", Object: ", obj != null ? obj.ToString() : "null"));
+            }
+            if (Environment.UserInteractive)
+            {
+                Console.BackgroundColor = ConsoleColor.Black;
+                Console.WriteLine(string.Concat("Verbose :: ", DateTime.Now.ToString(), ", Caller: ", callerName, ", lineNumber : ", lineNumber, ", Object: ", obj != null ? obj.ToString() : "null"));
             }
         }
         #endregion
@@ -67,6 +97,11 @@ namespace PlcCommon.Logs
             {
                 System.Diagnostics.Trace.WriteLine(string.Concat("Info :: ", DateTime.Now.ToString(), ", Caller: ", callerName, ", lineNumber : ", lineNumber, ", Exception: ", exception.Message, ", StackTrace:", exception.StackTrace));
             }
+            if (Environment.UserInteractive)
+            {
+                Console.BackgroundColor = ConsoleColor.DarkBlue;
+                Console.WriteLine(string.Concat("Info :: ", DateTime.Now.ToString(), ", Caller: ", callerName, ", lineNumber : ", lineNumber, ", Exception: ", exception.Message, ", StackTrace:", exception.StackTrace));
+            }
         }
 
         public static void I(string str, [CallerMemberName] string callerName = "", [CallerLineNumber] int lineNumber = 0)
@@ -76,6 +111,11 @@ namespace PlcCommon.Logs
             if (level.GetHashCode() >= 3)
             {
                 System.Diagnostics.Trace.WriteLine(string.Concat("Info :: ", DateTime.Now.ToString(), ", Caller: ", callerName, ", lineNumber : ", lineNumber, ", Mesaj: ", str));
+            }
+            if (Environment.UserInteractive)
+            {
+                Console.BackgroundColor = ConsoleColor.DarkBlue;
+                Console.WriteLine(string.Concat("Info :: ", DateTime.Now.ToString(), ", Caller: ", callerName, ", lineNumber : ", lineNumber, ", Mesaj: ", str));
             }
         }
 
@@ -99,6 +139,11 @@ namespace PlcCommon.Logs
             {
                 System.Diagnostics.Trace.WriteLine(string.Concat("Warning :: ", DateTime.Now.ToString(), ", Caller: ", callerName, ", lineNumber : ", lineNumber, ", Exception: ", exception.Message, ", StackTrace:", exception.StackTrace));
             }
+            if (Environment.UserInteractive)
+            {
+                Console.BackgroundColor = ConsoleColor.DarkYellow;
+                Console.WriteLine(string.Concat("Warning :: ", DateTime.Now.ToString(), ", Caller: ", callerName, ", lineNumber : ", lineNumber, ", Exception: ", exception.Message, ", StackTrace:", exception.StackTrace));
+            }
         }
 
         public static void W(string str, [CallerMemberName] string callerName = "", [CallerLineNumber] int lineNumber = 0)
@@ -109,6 +154,11 @@ namespace PlcCommon.Logs
             {
                 System.Diagnostics.Trace.WriteLine(string.Concat("Warning :: ", DateTime.Now.ToString(), ", Caller: ", callerName, ", lineNumber : ", lineNumber, ", Mesaj: ", str));
             }
+            if (Environment.UserInteractive)
+            {
+                Console.BackgroundColor = ConsoleColor.DarkYellow;
+                Console.WriteLine(string.Concat("Warning :: ", DateTime.Now.ToString(), ", Caller: ", callerName, ", lineNumber : ", lineNumber, ", Mesaj: ", str));
+            }
         }
 
         public static void W(object obj, [CallerMemberName] string callerName = "", [CallerLineNumber] int lineNumber = 0)
@@ -118,6 +168,11 @@ namespace PlcCommon.Logs
             if (level.GetHashCode() >= 2)
             {
                 System.Diagnostics.Trace.WriteLine(string.Concat("Warning :: ", DateTime.Now.ToString(), ", Caller: ", callerName, ", lineNumber : ", lineNumber, ", Object: ", obj != null ? obj.ToString() : "null"));
+            }
+            if (Environment.UserInteractive)
+            {
+                Console.BackgroundColor = ConsoleColor.DarkYellow;
+                Console.WriteLine(string.Concat("Warning :: ", DateTime.Now.ToString(), ", Caller: ", callerName, ", lineNumber : ", lineNumber, ", Object: ", obj != null ? obj.ToString() : "null"));
             }
         }
         #endregion
@@ -131,6 +186,13 @@ namespace PlcCommon.Logs
             {
                 System.Diagnostics.Trace.WriteLine(string.Concat("Error :: ", DateTime.Now.ToString(), ", Caller: ", callerName, ", lineNumber : ", lineNumber, ", Exception: ", exception.Message, ", StackTrace:", exception.StackTrace));
             }
+
+
+            if (Environment.UserInteractive)
+            {
+                Console.BackgroundColor = ConsoleColor.Red;
+                Console.WriteLine(string.Concat("Error :: ", DateTime.Now.ToString(), ", Caller: ", callerName, ", lineNumber : ", lineNumber, ", Exception: ", exception.Message, ", StackTrace:", exception.StackTrace));
+            }
         }
 
         public static void E(string str, [CallerMemberName] string callerName = "", [CallerLineNumber] int lineNumber = 0)
@@ -141,6 +203,11 @@ namespace PlcCommon.Logs
             {
                 System.Diagnostics.Trace.WriteLine(string.Concat("Error :: ", DateTime.Now.ToString(), ", Caller: ", callerName, ", lineNumber : ", lineNumber, ", Mesaj: ", str));
             }
+            if (Environment.UserInteractive)
+            {
+                Console.BackgroundColor = ConsoleColor.Red;
+                Console.WriteLine(string.Concat("Error :: ", DateTime.Now.ToString(), ", Caller: ", callerName, ", lineNumber : ", lineNumber, ", Mesaj: ", str));
+            }
         }
 
         public static void E(object obj, [CallerMemberName] string callerName = "", [CallerLineNumber] int lineNumber = 0)
@@ -150,6 +217,11 @@ namespace PlcCommon.Logs
             if (level.GetHashCode() >= 1)
             {
                 System.Diagnostics.Trace.WriteLine(string.Concat("Error :: ", DateTime.Now.ToString(), ", Caller: ", callerName, ", lineNumber : ", lineNumber, ", Object: ", obj != null ? obj.ToString() : "null"));
+            }
+            if (Environment.UserInteractive)
+            {
+                Console.BackgroundColor = ConsoleColor.Red;
+                Console.WriteLine(string.Concat("Error :: ", DateTime.Now.ToString(), ", Caller: ", callerName, ", lineNumber : ", lineNumber, ", Object: ", obj != null ? obj.ToString() : "null"));
             }
         }
         #endregion

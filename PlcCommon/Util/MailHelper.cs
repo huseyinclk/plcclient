@@ -51,7 +51,7 @@ namespace PlcCommon.Util
                 {
                     mesaj.To.Add(new MailAddress("huseyin.celik@uyumsoft.com", "Hüseyin ÇELİK <huseyin.celik@uyumsoft.com>"));
                     //mesaj.To.Add(new MailAddress("huseyin.clk@hotmail.com", "Hüseyin ÇELİK <huseyin.clk@hotmail.com>"));
-                    ////mesaj.To.Add(new MailAddress("mustafa.bayer@uyumsoft.com", "Mustafa BAYER <mustafa.bayer@uyumsoft.com>"));
+                    mesaj.To.Add(new MailAddress("mustafa.bayer@uyumsoft.com", "Mustafa BAYER <mustafa.bayer@uyumsoft.com>"));
                     //mesaj.To.Add(new MailAddress("tolga.ozdag@uyumsoft.com", "Tolga ÖZDAĞ <tolga.ozdag@uyumsoft.com>"));
                     ////mesaj.To.Add(new MailAddress("huseyin.kilinc@ors.com.tr", "Hüseyin KILINÇ <huseyin.kilinc@ors.com.tr>"));
                 }

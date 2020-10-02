@@ -14,7 +14,7 @@ namespace PlcCommon.S7.Net
     public partial class Plc : IDisposable
     {
         private const int CONNECTION_TIMED_OUT_ERROR_CODE = 10060;
-        
+
         //TCP connection to device
         private TcpClient tcpClient;
         private NetworkStream stream;
@@ -75,7 +75,7 @@ namespace PlcCommon.S7.Net
                 if (tcpClient != null) tcpClient.SendTimeout = writeTimeout;
             }
         }
-        
+
         /// <summary>
         /// Returns true if a connection to the PLC can be established
         /// </summary>
@@ -188,9 +188,31 @@ namespace PlcCommon.S7.Net
         /// </summary>
         public void Close()
         {
+            if (stream != null)
+            {
+                try
+                {
+                    stream.Close();
+                    stream.Dispose();
+                    stream = null;
+                }
+                catch (Exception e)
+                {
+                    Logger.E(e);
+                }
+            }
             if (tcpClient != null)
             {
-                if (tcpClient.Connected) tcpClient.Close();
+                try
+                {
+                    if (tcpClient.Connected) tcpClient.Close();
+                    tcpClient.Dispose();
+                    tcpClient = null;
+                }
+                catch (Exception e)
+                {
+                    Logger.E(e);
+                }
             }
         }
 
@@ -202,7 +224,7 @@ namespace PlcCommon.S7.Net
                 Logger.E($"Too many vars requested for read");
                 //throw new Exception("Too many vars requested for read");
             }
-            
+
             // 14 bytes of header data, 4 bytes of result data for each dataItem and the actual data
             if (GetDataLength(dataItems) + dataItems.Count * 4 + 14 > MaxPDUSize)
             {

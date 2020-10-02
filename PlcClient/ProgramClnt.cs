@@ -25,9 +25,7 @@ namespace PlcClient
     class ProgramClnt
     {
         const string EventLogSource = "PlcClient";
-        private static RabbitMQManager counterConsumer;
         private static List<AutomationDeviceInfo> devices = null;
-        static System.Timers.Timer timerCounter = null;
         static string applicationKey = "";
 
         static void Main(string[] args)
@@ -64,58 +62,47 @@ namespace PlcClient
                                 {
                                     for (int i = 0; i < devices.Count; i++)
                                     {
-                                        if (object.ReferenceEquals(devices[i].Device, null))
-                                        {
-                                            Logger.I($"PLC bağlanılıyor HOST:{devices[i].DeviceHost}");
-                                            devices[i].Device = new PlcCommon.S7.Net.Plc(PlcCommon.S7.Net.CpuType.S71200, devices[i].DeviceHost, 0, 1);
-                                            devices[i].Device.Open();
-                                        }
+                                        Logger.I($"PLC bağlanılıyor HOST:{devices[i].DeviceHost}");
+                                        string _redisKey = string.Concat(StackRedisManager.RedisKeyPrefix, devices[i].DeviceHost, ":Status");
+                                        devices[i].Device = new PlcCommon.S7.Net.Plc(PlcCommon.S7.Net.CpuType.S71200, devices[i].DeviceHost, 0, 1);
+                                        devices[i].Device.Open();
 
-                                        if (!devices[i].Device.IsConnected)
+                                        if (devices[i].Device.IsConnected)
                                         {
-                                            Logger.I($"PLC ulaşılamıyor HOST:{devices[i].DeviceHost}");
-                                            string _redisKey = string.Concat(StackRedisManager.RedisKeyPrefix, devices[i].DeviceHost, ":Status");
-                                            rm.SetHash(_redisKey, new HashEntry[] {
-                                                                        new HashEntry("statu", "offline"),
-                                                                        new HashEntry("check", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"))});
-                                            continue;
-                                        }
-                                        else
-                                        {
-                                            Logger.I($"PLC Okunuyor HOST:{devices[i].DeviceHost}");
-                                            string _redisKey = string.Concat(StackRedisManager.RedisKeyPrefix, devices[i].DeviceHost, ":Status");
-                                            rm.SetHash(_redisKey, new HashEntry[] {
-                                                                        new HashEntry("statu", "online"),
-                                                                        new HashEntry("check", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"))});
+                                            Logger.I($"PLC baglanildi HOST:{devices[i].DeviceHost}");
+                                            rm.SetHash(_redisKey, new HashEntry[] { new HashEntry("statu", "online"), new HashEntry("check", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")) });
 
                                             for (int loop = 0; loop < devices[i].DeviceDInfo.Count; loop++)
                                             {
-                                                _redisKey = string.Concat(StackRedisManager.RedisKeyPrefix, devices[i].DeviceHost, ":", devices[i].DeviceDInfo[loop].Address, ":Pin");
-                                                int value = 0;
+                                                int value = -1;
                                                 var xval = devices[i].Device.Read(devices[i].DeviceDInfo[loop].Address);
                                                 if (xval != null)
                                                 {
                                                     value = Convert.ToInt32(xval);
                                                 }
+                                                else//okuma basarisiz, plc baglantisi koptu
+                                                {
+                                                    Logger.E($"PLC degeri okunamadi:{devices[i].DeviceHost},{devices[i].DeviceDInfo[loop].WstationCode}");
+                                                    continue;
+                                                }
+
                                                 DateTime now = DateTime.Now;
+                                                _redisKey = string.Concat(StackRedisManager.RedisKeyPrefix, devices[i].DeviceHost, ":", devices[i].DeviceDInfo[loop].Address, ":Pin");
                                                 var pinVal = rm.GetValue(_redisKey);
                                                 if (pinVal == null)
                                                 {
-                                                    pinVal = new PinValue();
-                                                    pinVal.IsBreak = false;
-                                                    pinVal.IsRework = false;
-                                                    pinVal.Time = (int)Utility.ConvertToUnixTime(DateTime.Now);
-                                                    pinVal.Date = DateTime.Now;
-                                                    pinVal.WstationCode = devices[i].DeviceDInfo[loop].WstationCode;
-                                                    pinVal.SessionId = Utility.ApplicationSessionId;
+                                                    pinVal = new PinValue(devices[i].DeviceDInfo[loop].WstationCode);
                                                 }
 
-                                                if (pinVal.VCount > 0)
+                                                if (value == -1) value = pinVal.Count;
+
+                                                if (pinVal.VCount > 0)//plc vardiya değiştirde ulasilamdiysa simdi sifirlaniyor
                                                 {
                                                     value = value - pinVal.VCount;
+                                                    if (value < 0) value = 0;
                                                     devices[i].Device.Write(devices[i].DeviceDInfo[loop].Address, value);
                                                     pinVal.VCount = 0;
-
+                                                    Logger.I($"Vardiya degistirmede sifirlanamayan tezgah sifirlandi:{devices[i].DeviceDInfo[loop].WstationCode}");
                                                 }
 
                                                 if (pinVal.Date.Year < 2020) pinVal.Date = Utility.UnixTimeToDateTime(pinVal.Time);
@@ -171,7 +158,9 @@ namespace PlcClient
                                                 }
 
                                                 pinVal.SessionId = Utility.ApplicationSessionId;
+                                                pinVal.Date = DateTime.Now;
                                                 pinVal.Count = value;
+
                                                 rm.SetValue(_redisKey, pinVal);
                                             }// okuma end
 
@@ -179,6 +168,14 @@ namespace PlcClient
                                             // Here, the second application initializes what it needs to.
                                             // When it's done, it signals the wait handle:
                                         }
+                                        else
+                                        {
+                                            Logger.I($"PLC ulaşılamıyor HOST:{devices[i].DeviceHost}");
+                                            rm.SetHash(_redisKey, new HashEntry[] { new HashEntry("statu", "offline"), new HashEntry("check", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")) });
+                                        }
+
+                                        devices[i].Device.Close();
+                                        devices[i].Device = null;
                                     }
                                 }
 
@@ -229,65 +226,6 @@ namespace PlcClient
             }
         }
 
-
-        private static void TimerCallback(object sender, ElapsedEventArgs e)
-        {
-            try
-            {
-                timerCounter.Enabled = false;
-                if (devices != null && devices.Count > 0)
-                {
-                    foreach (AutomationDeviceInfo device in devices)
-                    {
-                        using (StackRedisManager rm = new StackRedisManager())
-                        {
-                            try
-                            {
-                                if (object.ReferenceEquals(device.Device, null))
-                                {
-                                    device.Device = new PlcCommon.S7.Net.Plc(PlcCommon.S7.Net.CpuType.S71200, device.DeviceHost, 0, 1);
-                                    device.Device.Open();
-                                    rm.SetDevice(string.Concat(StackRedisManager.RedisAppKeyPrefix, applicationKey, ":D:", device.DeviceHost, ":S"), device);
-                                    if (!device.IsConnected)
-                                    {
-                                        continue;
-                                    }
-                                }
-
-                                foreach (AutomationDeviceDInfo deviceDInfo in device.DeviceDInfo)
-                                {
-                                    int value = 0;
-                                    object plcVal = device.Device.Read(deviceDInfo.Address);
-                                    if (plcVal != null)
-                                    {
-                                        value = Convert.ToInt32(plcVal);
-                                    }
-
-                                    rm.SetHash(string.Concat(StackRedisManager.RedisAppKeyPrefix, applicationKey, ":D:", device.DeviceHost, ":", deviceDInfo.Address), new HashEntry[] { new HashEntry("val", value), new HashEntry("check", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")) });
-                                }
-
-                            }
-                            catch (Exception exc)
-                            {
-                                Logger.E(exc);
-                            }
-                        }
-
-                    }
-                }
-            }
-            catch (Exception exception)
-            {
-                Logger.E(exception);
-            }
-            finally
-            {
-                timerCounter.Enabled = true;
-            }
-
-        }
-
-
         static void InitialLogger()
         {
             Thread.CurrentThread.CurrentUICulture = new CultureInfo("tr-TR");
@@ -305,86 +243,15 @@ namespace PlcClient
 
                 Console.Title = $"PLC Client V:{Utility.Versiyon} Device:{applicationKey} Log:{tracelavel}";
 
-                var consoleTracer = new ConsoleTraceListener(true);
-                consoleTracer.Flush();
-                Trace.Listeners.Add(consoleTracer);
+                //var consoleTracer = new ConsoleTraceListener(true);
+                //consoleTracer.Flush();
+                //Trace.Listeners.Add(consoleTracer);
 
                 //Console.WriteLine("Press any key to stop...");
                 //Console.ReadKey(true);
             }
 
             Application.ThreadException += Application_ThreadException;
-        }
-
-
-        static void CounterConsume()
-        {
-            try
-            {
-                counterConsumer = new RabbitMQManager(RabbitMQManager.QueueNameCounter, 10);
-                counterConsumer.Received += CounterConsumer_Received;
-                counterConsumer.Consume();
-            }
-            catch (Exception exc)
-            {
-                Logger.E("Application Error:" + exc.Message);
-                Logger.E(exc);
-            }
-        }
-
-
-        private static void CounterConsumer_Received(object sender, RabbitMQ.Client.Events.BasicDeliverEventArgs e)
-        {
-            Monitor.Enter(counterConsumer);
-            if (e != null)
-            {
-                try
-                {
-                    Logger.I("Counter received");
-                    var message = Encoding.UTF8.GetString(e.Body);
-                    if (!string.IsNullOrEmpty(message))
-                    {
-                        WorderAcOpInfo worderInfo = JsonConvert.DeserializeObject<WorderAcOpInfo>(message);
-                        if (worderInfo != null)
-                        {
-                            try
-                            {
-                                Logger.W($"Counter reset received:{worderInfo.WstationCode}");
-                                //var plc = device.Where(p => p.IP == worderInfo.HostName).FirstOrDefault();
-                                //if (plc != null)
-                                //{
-                                //    if (plc.CounterReset(worderInfo.Address, worderInfo.Qty))
-                                //    {
-                                //        Console.BackgroundColor = ConsoleColor.Blue;
-                                //        counterConsumer.BasicAck(e.DeliveryTag, false);
-                                //        Logger.I("ors.opcclient.counter-->" + worderInfo.WstationCode);
-                                //        Console.WriteLine("ors.opcclient.counter-->" + worderInfo.WstationCode);
-                                //    }
-                                //    else
-                                //    {
-                                //        Logger.E("ors.opcclient.counter-->Error:" + worderInfo.WstationCode);
-                                //        counterConsumer.BasicReject(e.DeliveryTag, false); // hata olduğunda siliyoruz şimdilik
-                                //    }
-                                //}
-                                //else
-                                //{
-                                //    Logger.E("Counter plc bulunamadı:" + worderInfo.HostName);
-                                //}
-                            }
-                            catch (Exception exc)
-                            {
-                                Logger.E("counter.Error-->" + worderInfo.WstationCode + ",Detay:" + exc.Message);
-                            }
-                        }
-                    }
-                }
-                catch (Exception exception)
-                {
-                    counterConsumer.BasicReject(e.DeliveryTag, false); // hata olduğunda siliyoruz şimdilik
-                    Logger.E("counter.Error-->CounterPublisher_Received,Detay:" + exception.Message);
-                }
-            }
-            Monitor.Exit(counterConsumer);
         }
 
         private static void Application_ThreadException(object sender, ThreadExceptionEventArgs e)
@@ -417,8 +284,88 @@ namespace PlcClient
             }
             Logger.E(stringBuilder.ToString());
             EventLog.WriteEntry(EventLogSource, stringBuilder.ToString(), EventLogEntryType.Error, 58, 1);
-            MailHelper.SendMail(MailHelper.Adresler, MailHelper.MailBaslik, stringBuilder.ToString());
+            MailHelper.SendMail(null, MailHelper.MailBaslik, stringBuilder.ToString());
         }
+
+        /// <summary>
+        /// cihaz durumunu kontrol eder, yeni baglanti kurar
+        /// </summary>
+        /// <param name="deviceIndex"></param>
+        /// <param name="rm"></param>
+        /// <returns></returns>
+        private static bool IsDeviceReady(int deviceIndex, StackRedisManager rm)
+        {
+            string _redisKey = string.Concat(StackRedisManager.RedisKeyPrefix, devices[deviceIndex].DeviceHost, ":Status");
+            //Program ilk defa acildi cihaza bağlanmaya calisilacak
+            if (object.ReferenceEquals(devices[deviceIndex].Device, null))
+            {
+                if (InitDevice(deviceIndex))
+                {
+                    Logger.I($"PLC baglanildi HOST:{devices[deviceIndex].DeviceHost}");
+                    rm.SetHash(_redisKey, new HashEntry[] { new HashEntry("statu", "online"), new HashEntry("check", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")) });
+                    return true;
+                }
+                else
+                {
+                    Logger.I($"PLC ulaşılamıyor HOST:{devices[deviceIndex].DeviceHost}");
+                    rm.SetHash(_redisKey, new HashEntry[] { new HashEntry("statu", "offline"), new HashEntry("check", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")) });
+                    return false;
+                }
+            }
+
+            //uygulama statusuna bakilacak offlinesa baglanilmayacak 30 dk
+            HashEntry[] values = rm.GetHash(_redisKey);
+            if (values != null && values.Length > 1)
+            {
+                if (values[0].Value == "offline")
+                {
+                    DateTime dt = Convert.ToDateTime(values[1].Value);
+                    DateTime dt2 = DateTime.Now;
+                    if (dt2.Subtract(dt).Minutes > 20)
+                    {
+                        if (InitDevice(deviceIndex))
+                        {
+                            Logger.I($"PLC Okunuyor HOST:{devices[deviceIndex].DeviceHost}");
+                            rm.SetHash(_redisKey, new HashEntry[] { new HashEntry("statu", "online"), new HashEntry("check", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")) });
+                            return true;
+                        }
+                        else
+                        {
+                            Logger.I($"PLC ulaşılamıyor HOST:{devices[deviceIndex].DeviceHost}");
+                            rm.SetHash(_redisKey, new HashEntry[] { new HashEntry("statu", "offline"), new HashEntry("check", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")) });
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        //30 dk altinda offline bu cihazi es gec
+                        return false;
+                    }
+                }
+            }
+
+            if (!devices[deviceIndex].Device.IsConnected)
+            {
+                Logger.I($"PLC ulaşılamıyor HOST:{devices[deviceIndex].DeviceHost}");
+                rm.SetHash(_redisKey, new HashEntry[] { new HashEntry("statu", "offline"), new HashEntry("check", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")) });
+                return false;
+            }
+
+            Logger.I($"PLC Okunuyor HOST:{devices[deviceIndex].DeviceHost}");
+            rm.SetHash(_redisKey, new HashEntry[] { new HashEntry("statu", "online"), new HashEntry("check", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")) });
+
+            return true;
+        }
+
+        private static bool InitDevice(int deviceIndex)
+        {
+            Logger.I($"PLC bağlanılıyor HOST:{devices[deviceIndex].DeviceHost}");
+            devices[deviceIndex].Device = new PlcCommon.S7.Net.Plc(PlcCommon.S7.Net.CpuType.S71200, devices[deviceIndex].DeviceHost, 0, 1);
+            devices[deviceIndex].Device.Open();
+
+            return devices[deviceIndex].Device.IsConnected;
+        }
+
     }
 }
 

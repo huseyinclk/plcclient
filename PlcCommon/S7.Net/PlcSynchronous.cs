@@ -6,6 +6,7 @@ using PlcCommon.S7.Net.Protocol;
 using PlcCommon.S7.Net.Types;
 using PlcCommon.Logs;
 using System.Threading;
+using System.IO;
 
 //Implement synchronous methods here
 namespace PlcCommon.S7.Net
@@ -116,7 +117,7 @@ namespace PlcCommon.S7.Net
                 var maxToRead = (int)Math.Min(count, MaxPDUSize - 18);
                 byte[] bytes = ReadBytesWithSingleRequest(dataType, db, index, maxToRead);
                 if (bytes == null)
-                    return resultBytes.ToArray();
+                    return null;
                 resultBytes.AddRange(bytes);
                 count -= maxToRead;
                 index += maxToRead;
@@ -383,9 +384,9 @@ namespace PlcCommon.S7.Net
 
         private byte[] ReadBytesWithSingleRequest(DataType dataType, int db, int startByteAdr, int count)
         {
-            byte[] bytes = new byte[count];
             try
             {
+                byte[] bytes = new byte[count];
                 // first create the header
                 int packageSize = 31;
                 ByteArray package = new ByteArray(packageSize);
@@ -401,6 +402,7 @@ namespace PlcCommon.S7.Net
                 if (s7data == null || s7data[14] != 0xff)
                 {
                     Logger.E($"WrongNumberReceivedBytes if (s7data({s7data}) == null || s7data[14]({s7data[14]}) != 0xff)");
+                    return null;
                     //throw new PlcException(ErrorCode.WrongNumberReceivedBytes);
                 }
 
@@ -409,12 +411,18 @@ namespace PlcCommon.S7.Net
 
                 return bytes;
             }
+            catch (IOException ioexc)
+            {
+                Logger.E(ioexc);
+                return null;
+                //throw new PlcException(ErrorCode.ReadData, exc);
+            }
             catch (Exception exc)
             {
                 Logger.E(exc);
+                return null;
                 //throw new PlcException(ErrorCode.ReadData, exc);
             }
-            return bytes;
         }
 
         /// <summary>

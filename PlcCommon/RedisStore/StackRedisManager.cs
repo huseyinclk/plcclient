@@ -89,23 +89,23 @@ namespace PlcCommon.RedisStore
                 if (hashEntry != null && hashEntry.Length > 0)
                 {
                     if (hashEntry.Length > 0)
-                        value.Count = (int)hashEntry[0].Value;
+                        value.Count = (int)hashEntry[0].Value; 
                     if (hashEntry.Length > 1)
-                        value.Time = (int)hashEntry[1].Value;
+                        value.Time = (int)hashEntry[1].Value; 
                     if (hashEntry.Length > 2)
                         value.IsBreak = hashEntry[2].Value == "1";
                     if (hashEntry.Length > 3)
-                        value.SessionId = hashEntry[3].Value;
+                        value.SessionId = hashEntry[3].Value; 
                     if (hashEntry.Length > 4)
                         value.Id = Convert.ToInt32(hashEntry[4].Value);
                     if (hashEntry.Length > 5)
-                        value.WstationCode = hashEntry[5].Value;
+                        value.WstationCode = hashEntry[5].Value; 
                     if (hashEntry.Length > 6)
                         value.IsRework = hashEntry[6].Value == "1";
                     if (hashEntry.Length > 7)
-                        value.RCount = Convert.ToInt32(hashEntry[7].Value);
+                        value.RCount = Convert.ToInt32(hashEntry[7].Value); 
                     if (hashEntry.Length > 8)
-                        value.RTime = Convert.ToInt32(hashEntry[8].Value);
+                        value.RTime = Convert.ToInt32(hashEntry[8].Value); 
                     if (hashEntry.Length > 9)
                         value.Date = Convert.ToDateTime(hashEntry[9].Value.ToString());
                     if (hashEntry.Length > 10)
@@ -116,7 +116,8 @@ namespace PlcCommon.RedisStore
             {
                 lock (LockForLogging)
                 {
-                    Logger.W(string.Format("Error in Get from cache this key: {0}, Err:{1}", _redisKey, exc.Message));
+                    //Logger.W(JsonConvert.SerializeObject(hashEntry));
+                    Logger.W(string.Concat("Error in Get from cache this key: ", _redisKey, ",Message:", exc.Message, ",StackTrace:", exc.StackTrace));
                 }
             }
             return value;

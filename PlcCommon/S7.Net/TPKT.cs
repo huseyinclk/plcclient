@@ -23,6 +23,7 @@ namespace PlcCommon.S7.Net
         /// <returns>TPKT Instance</returns>
         public static TPKT Read(Stream stream)
         {
+
             var buf = new byte[4];
             int len = stream.Read(buf, 0, 4);
             if (len < 4)
@@ -43,11 +44,13 @@ namespace PlcCommon.S7.Net
                 len = stream.Read(pkt.Data, 0, pkt.Length - 4);
                 if (len < pkt.Length - 4)
                 {
-                    Logger.E($"TPKT is incomplete / invalid if (len({len}) < pkt.Length({pkt.Length}) - 4)"); return null;
+                    Logger.E($"TPKT is incomplete / invalid if (len({len}) < pkt.Length({pkt.Length}) - 4)");
+                    return null;
                     //throw new TPKTInvalidException("TPKT is incomplete / invalid");
                 }
             }
             return pkt;
+
         }
 
         /// <summary>
@@ -61,7 +64,8 @@ namespace PlcCommon.S7.Net
             int len = await stream.ReadAsync(buf, 0, 4);
             if (len < 4)
             {
-                Logger.E($"TPKT is incomplete / invalid if (len({len}) < 4)"); return null;
+                Logger.E($"TPKT is incomplete / invalid if (len({len}) < 4)");
+                return null;
                 //throw new TPKTInvalidException("TPKT is incomplete / invalid");
             }
 
@@ -77,7 +81,8 @@ namespace PlcCommon.S7.Net
                 len = await stream.ReadAsync(pkt.Data, 0, pkt.Length - 4);
                 if (len < pkt.Length - 4)
                 {
-                    Logger.E($"TPKT is incomplete / invalid if (len({len}) < pkt.Length({ pkt.Length}) - 4))"); return null;
+                    Logger.E($"TPKT is incomplete / invalid if (len({len}) < pkt.Length({ pkt.Length}) - 4))");
+                    return null;
                     //throw new TPKTInvalidException("TPKT is incomplete / invalid");
                 }
             }
