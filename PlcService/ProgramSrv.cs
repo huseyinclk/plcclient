@@ -456,10 +456,10 @@ namespace PlcService
                             {
                                 device[i].Device = new PlcCommon.S7.Net.Plc(PlcCommon.S7.Net.CpuType.S71200, device[i].DeviceHost, 0, 1);
 
-                                isonline = device[i].Device.IsConnected;
-
                                 if (device[i].IsOnline(rm))
                                     device[i].Device.Open();
+
+                                isonline = device[i].Device.IsConnected;
 
                                 if (!isonline)
                                 {
@@ -532,7 +532,7 @@ namespace PlcService
                 writer.Close();
                 writer.Dispose();
 
-                MailHelper.SendMail(null, MailHelper.MailBaslik, $"`{Utility.CurrentShift.ShiftCode}` Vardiya başarılı bir şekilde değiştirildi, ancak bazı PLC lere işlem yapılamadı. PLC adresleri ektedir. Memory-1: {logwriter.Memory} Memory-2: {logwriter.TotalMemory}, ElapsedMillisecond:{logwriter.ElapsedMilliseconds}, Başlangıç:{logwriter.SatartTime.ToString("HH:mm:ss")}, Bitiş:{logwriter.EndTime.ToString("HH:mm:ss")}", trace);
+                MailHelper.SendMail(offlineCount > 0 ? MailHelper.Adresler : null, MailHelper.MailBaslik, $"`{Utility.CurrentShift.ShiftCode}` Vardiya başarılı bir şekilde değiştirildi, ancak bazı PLC lere işlem yapılamadı. PLC adresleri ektedir. Memory-1: {logwriter.Memory} Memory-2: {logwriter.TotalMemory}, ElapsedMillisecond:{logwriter.ElapsedMilliseconds}, Başlangıç:{logwriter.SatartTime.ToString("HH:mm:ss")}, Bitiş:{logwriter.EndTime.ToString("HH:mm:ss")}", trace);
 
             }
             catch (Exception exception)
